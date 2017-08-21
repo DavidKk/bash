@@ -2,7 +2,7 @@
 
 # Variables definations
 RELEASE_BRANCH=master
-DEPLOY_BRANCH=deploy
+DEPLOY_BRANCH=gh-pages
 DIST_FOLDER=dist
 TEMP_FOLDER=.built_website
 
