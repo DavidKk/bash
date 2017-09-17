@@ -33,17 +33,25 @@ if [ -d $DIST_FOLDER_PATH ]; then
   # Clone pero and switch branch
   git init
   git remote add origin $TARGET_REPO
-  git checkout $DEPLOY_BRANCH || git checkout -b $DEPLOY_BRANCH || exit 0;
+  git checkout $DEPLOY_BRANCH || git checkout -b $DEPLOY_BRANCH && git pull origin $DEPLOY_BRANCH || exit 0;
 
   # Copy data we're interested in to that directory
-  rsync -rv --exclude=.git $DIST_FOLDER_PATH/* . || exit 0;
+  git rm -rf .
+  cp -rf $DIST_FOLDER_PATH/* .
 
   # Add, commit and push files
   git add -f .
-  git commit -m "($LAST_MESSAGE) Deploy branch $RELEASE_BRANCH to $TARGET_REPO:$DEPLOY_BRANCH"
-  git push -fq origin $DEPLOY_BRANCH > /dev/null || exit 0;
+  git diff-index --name-only HEAD --
 
-  echo -e "Deployment completed.\n"
+  if [ -z $(git diff-index --name-only HEAD --) ]; then
+    echo -e "Nothing has been changed.\n"
+  else
+    git commit -m "($LAST_MESSAGE) Deploy branch $RELEASE_BRANCH to $TARGET_REPO:$DEPLOY_BRANCH"
+    git push origin $DEPLOY_BRANCH > /dev/null || exit 0;
+
+    echo -e "Deployment completed.\n"
+  fi
 else
   echo -e "Folder $DIST_FOLDER_PATH does not exist\n"
 fi
+
