@@ -2,7 +2,7 @@
 
 # Variables definations
 RELEASE_BRANCH=master
-DEPLOY_BRANCH=gh-pages
+DEPLOY_BRANCH=deploy
 DIST_FOLDER=dist
 TEMP_FOLDER=.built_website
 
@@ -11,16 +11,16 @@ LAST_MESSAGE=$(git log -1 origin/$RELEASE_BRANCH --oneline)
 DIST_FOLDER_PATH=$(realpath "$DIST_FOLDER")
 TEMP_FOLDER_PATH=$(realpath "$TEMP_FOLDER")
 
-echo -e "Git repository: $TARGET_REPO"
-echo -e "Distributed path: $DIST_FOLDER_PATH"
-echo -e "Temporary path: $TEMP_FOLDER_PATH"
+printf '%s \e[0;94m%s\e[0m\n' 'Repository:' "$TARGET_REPO"
+printf '%s \e[0;94m%s\e[0m\n' 'Distribute:' "$DIST_FOLDER_PATH"
+printf '%s \e[0;94m%s\e[0m\n' ' Temporary:' "$TEMP_FOLDER_PATH"
 
 # Switch release branch
 git checkout $RELEASE_BRANCH || exit 0;
 git pull origin $RELEASE_BRANCH || exit 0;
 
 if [ -d $DIST_FOLDER_PATH ]; then
-  echo -e "Deploy to product environment\n"
+  printf '\e[0;94m\xe2\x9c\xa8  %s\e[0m\n' 'Deploy to product environment.'
 
   # Clean or create temporary directory
   if [ -d $TEMP_FOLDER_PATH ]; then
@@ -33,7 +33,11 @@ if [ -d $DIST_FOLDER_PATH ]; then
   # Clone pero and switch branch
   git init
   git remote add origin $TARGET_REPO
-  git checkout $DEPLOY_BRANCH || git checkout -b $DEPLOY_BRANCH && git pull origin $DEPLOY_BRANCH || exit 0;
+
+  if [ -z $(git checkout $DEPLOY_BRANCH) ]; then
+    git checkout -b $DEPLOY_BRANCH
+    git pull origin $DEPLOY_BRANCH
+  fi
 
   # Copy data we're interested in to that directory
   git rm -rf .
@@ -44,14 +48,13 @@ if [ -d $DIST_FOLDER_PATH ]; then
   git diff-index --name-only HEAD --
 
   if [ -z $(git diff-index --name-only HEAD --) ]; then
-    echo -e "Nothing has been changed.\n"
+    printf '\e[0;93m! %s\e[0m\n' 'Nothing has been changed.'
   else
     git commit -m "($LAST_MESSAGE) Deploy branch $RELEASE_BRANCH to $TARGET_REPO:$DEPLOY_BRANCH"
     git push origin $DEPLOY_BRANCH > /dev/null || exit 0;
 
-    echo -e "Deployment completed.\n"
+    printf '\e[0;32m\xe2\x9c\x94 %s\e[0m\n' 'Deployment completed.'
   fi
 else
-  echo -e "Folder $DIST_FOLDER_PATH does not exist\n"
+  printf '\e[0;31m\xe2\x9c\x98 %s\e[0m\n' "Folder $DIST_FOLDER_PATH does not exist."
 fi
-
