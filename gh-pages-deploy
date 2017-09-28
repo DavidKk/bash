@@ -2,7 +2,7 @@
 
 # Variables definations
 RELEASE_BRANCH=master
-DEPLOY_BRANCH=deploy
+DEPLOY_BRANCH=gh-page
 DIST_FOLDER=dist
 TEMP_FOLDER=.built_website
 
@@ -25,6 +25,7 @@ if [ -d $DIST_FOLDER_PATH ]; then
   # Clean or create temporary directory
   if [ -d $TEMP_FOLDER_PATH ]; then
     rm -rf $TEMP_FOLDER_PATH
+    printf '\e[0;32m\xe2\x9c\x94  %s\e[0m\n' "Clean $TEMP_FOLDER_PATH folder."
   fi
 
   mkdir $TEMP_FOLDER_PATH
@@ -34,9 +35,12 @@ if [ -d $DIST_FOLDER_PATH ]; then
   git init
   git remote add origin $TARGET_REPO
 
-  if [ -z $(git checkout $DEPLOY_BRANCH) ]; then
+  if [ $(git checkout $DEPLOY_BRANCH) ]; then
+    printf '\e[0;94m\xe2\x9c\xa8  %s\e[0m\n' "Checkout branch $DEPLOY_BRANCH."
+  else
+    printf '\e[0;94m\xe2\x9c\xa8  %s\e[0m\n' "Create and switch to branch $DEPLOY_BRANCH."
     git checkout -b $DEPLOY_BRANCH
-    git pull origin $DEPLOY_BRANCH
+    git pull origin $DEPLOY_BRANCH || exit 0;
   fi
 
   # Copy data we're interested in to that directory
@@ -45,16 +49,17 @@ if [ -d $DIST_FOLDER_PATH ]; then
 
   # Add, commit and push files
   git add -f .
-  git diff-index --name-only HEAD --
 
-  if [ -z $(git diff-index --name-only HEAD --) ]; then
+  DIFF=$(git diff-index --name-only HEAD --) || exit 0;
+
+  if [ -z $DIFF ]; then
     printf '\e[0;93m! %s\e[0m\n' 'Nothing has been changed.'
   else
     git commit -m "($LAST_MESSAGE) Deploy branch $RELEASE_BRANCH to $TARGET_REPO:$DEPLOY_BRANCH"
     git push origin $DEPLOY_BRANCH > /dev/null || exit 0;
 
-    printf '\e[0;32m\xe2\x9c\x94 %s\e[0m\n' 'Deployment completed.'
+    printf '\e[0;32m\xe2\x9c\x94  %s\e[0m\n' 'Deployment completed.'
   fi
 else
-  printf '\e[0;31m\xe2\x9c\x98 %s\e[0m\n' "Folder $DIST_FOLDER_PATH does not exist."
+  printf '\e[0;31m\xe2\x9c\x98  %s\e[0m\n' "Folder $DIST_FOLDER_PATH does not exist."
 fi
